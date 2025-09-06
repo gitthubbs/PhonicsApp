@@ -1,0 +1,6 @@
+{
+  "appId": "com.ray.phonicsapp",
+  "appName": "PhonicsApp",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}
