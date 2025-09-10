@@ -3,12 +3,33 @@ import HelloWorld from './components/HelloWorld.vue'
 </script>
 
 <template>
-    <div id="app">
-      <router-view />
-    </div>
+      <div class="app-container">
+        <router-view />
+      </div>
 </template>
 
-<style scoped>
+<style>
+
+html, body, #app {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  justify-content: center;
+}
+
+.app-container {
+  max-width: 100%;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
 .logo {
   height: 6em;
   padding: 1.5em;
