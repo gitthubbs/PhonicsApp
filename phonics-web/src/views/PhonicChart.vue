@@ -1,8 +1,8 @@
 <template>
   <div class="phonic-chart">
-    <div class="phonic-chart-title">
-      <h1 style="color: #1a1a1a">48个音标</h1>
-    </div>
+      <div class="phonic-chart-title">
+        <h1 style="color: #1a1a1a">学习音标</h1>
+      </div>
 
     <div v-for="(group, index) in phonicsGroups" :key="index" class="phonics-group">
       <h2 class="group-title">{{ group.title }}</h2>
@@ -11,7 +11,8 @@
             v-for="phonetic in group.items"
             :key="phonetic.symbol"
             class="phonetic-card"
-            @click="goToDetail(phonetic.symbol)"
+            @click="handleCardClick(phonetic.symbol)"
+            :class="{ 'active': activeCard === phonetic.symbol }"
         >
           {{ phonetic.symbol }}
         </div>
@@ -26,20 +27,21 @@
 
 <script>
 import { useRouter } from 'vue-router'
+import {ref} from "vue";
 
 export default {
   name: 'PhonicChart',
   setup() {
     const router = useRouter();
 
-    // 分组音标示例
+    // 分组音标
     const phonicsGroups = [
       {
         title: '元音 (Vowels)',
         items: [
-          { symbol: 'i:' }, { symbol: 'ɪ' }, { symbol: 'e' }, { symbol: 'æ' },
-          { symbol: 'ɑ:' }, { symbol: 'ɒ' }, { symbol: 'ɔ:' }, { symbol: 'ʊ' },
-          { symbol: 'u:' }, { symbol: 'ʌ' }, { symbol: 'ɜ:' }, { symbol: 'ə' }
+          { symbol: 'iː' }, { symbol: 'ɪ' }, { symbol: 'e' }, { symbol: 'æ' },
+          { symbol: 'ɑː' }, { symbol: 'ɒ' }, { symbol: 'ɔː' }, { symbol: 'ʊ' },
+          { symbol: 'uː' }, { symbol: 'ʌ' }, { symbol: 'ɜː' }, { symbol: 'ə' }
         ]
       },
       {
@@ -61,12 +63,24 @@ export default {
         ]
       }
     ];
-
     const goToDetail = (symbol) => {
       router.push({ name: 'PhonicDetail', params: { symbol } });
     };
 
-    return { phonicsGroups, goToDetail };
+
+    const activeCard = ref(null);
+    const handleCardClick = (symbol) => {
+      activeCard.value = symbol;
+
+      setTimeout(() => {
+        goToDetail(symbol);
+        activeCard.value = null;
+      }, 250);
+    };
+
+
+    return { phonicsGroups, goToDetail, handleCardClick, activeCard };
+
   }
 }
 </script>
@@ -74,7 +88,7 @@ export default {
 <style scoped>
 
 .phonic-chart {
-  background-color: #f0f4f8;
+  background-color: #ffffff;
   width: 100%;
   min-height: 100%;
   box-sizing: border-box;
@@ -84,6 +98,8 @@ export default {
   flex-direction: column;
   align-items: center;
 }
+
+
 
 .phonics-group {
   width: 100%;
@@ -99,14 +115,22 @@ export default {
 
 .phonetic-card {
   flex: 0 0 calc(25% - 9px); /* 四个卡片一行 */
-  background-color: #4a90e2;
+  background-color: #57c95c;
   color: #fff;
-  border-radius: 8px;
+  border-radius: 12px;
   text-align: center;
   padding: 18px 0;
   font-size: 20px;
   font-weight: 500;
   cursor: pointer;
+  box-shadow: 2px 4px 10px rgba(0,0,0,0.5);
+  transition: all 0.3s ease;
+}
+
+.phonetic-card.active {
+  transform: scale(0.95);
+  background-color: #3da543;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
 .group-title {
@@ -121,6 +145,7 @@ export default {
   margin: 20px 0;
   border-radius: 1px;
 }
+
 
 
 </style>
