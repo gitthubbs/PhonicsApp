@@ -1,4 +1,7 @@
 export function highlightPhonics(sentence, phoneme) {
+    // 处理对象格式的句子
+    const sentenceText = typeof sentence === 'string' ? sentence : sentence.text;
+
     // 音标与常见拼写的映射，可根据需要补充或调整
     const mapping = {
         'iː': /(ee|ea|ie|i)/gi,
@@ -20,12 +23,12 @@ export function highlightPhonics(sentence, phoneme) {
         'h': /h/gi, 'm': /m/gi, 'n': /n/gi, 'ŋ': /ng/gi,
         'l': /l/gi, 'r': /r/gi, 'j': /y/gi, 'w': /w/gi,
         'eɪ': /(a|ai|ay)/gi, 'aɪ': /(i|igh|y)/gi, 'ɔɪ': /(oi|oy)/gi,
-        'aʊ': /(ou|ow)/gi, 'əʊ': /(o|oa|ow)/gi, 'ɪə': /(ear|eer|ere)/gi,
+        'aʊ': /(ou|ow)/gi, 'əʊ': /(o|oa|ow)/gi, 'ɪə': /(ear|eer|ere|ea)/gi,
         'eə': /(air|are|ear)/gi, 'ʊə': /(ure|our)/gi,
     };
 
     const regex = mapping[phoneme];
-    if (!regex) return sentence;
+    if (!regex) return sentenceText;
 
-    return sentence.replace(regex, match => `<span style="color:green;font-weight:bold">${match}</span>`);
+    return sentenceText.replace(regex, match => `<span style="color:green;font-weight:bold">${match}</span>`);
 }

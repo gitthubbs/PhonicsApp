@@ -1,14 +1,45 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
+
+import { onMounted } from 'vue';
+import { TTSService } from '@/services/ttsService.js';
+import BottomNav from '@/components/BottomNav.vue';
+
+onMounted(async () => {
+  await TTSService.preloadTTS('en-GB'); // 英式英语
+});
+
+
 </script>
 
 <template>
       <div class="app-container">
-        <router-view />
+        <router-view v-slot="{ Component, route }">
+          <transition :name="route.meta.transition || 'fade'">
+            <component :is="Component" />
+          </transition>
+        </router-view>
+        <BottomNav />
       </div>
 </template>
 
 <style>
+
+/* 页面切换动画 */
+.slide-enter-active,
+.slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-enter-from {
+  transform: translateX(-100%);
+  opacity: 0;
+}
+
+.slide-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
 
 html, body, #app {
   margin: 0;
@@ -20,7 +51,7 @@ html, body, #app {
 }
 
 .app-container {
-  max-width: 100%;
+  background-color: #E5FFE5FF;
   width: 100%;
   height: 100%;
   overflow-y: auto;
@@ -28,6 +59,7 @@ html, body, #app {
   box-sizing: border-box;
   max-width: 600px;
   margin: 0 auto;
+  padding-bottom: 82px;
 }
 
 .logo {

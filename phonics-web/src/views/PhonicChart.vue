@@ -88,11 +88,11 @@ export default {
 <style scoped>
 
 .phonic-chart {
-  background-color: #ffffff;
+  background-color: #E5FFE5FF;
   width: 100%;
   min-height: 100%;
   box-sizing: border-box;
-  padding: 10px;
+  padding: 20px;
   -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
@@ -115,11 +115,11 @@ export default {
 
 .phonetic-card {
   flex: 0 0 calc(25% - 9px); /* 四个卡片一行 */
-  background-color: #57c95c;
+  background-color: #56ce5c;
   color: #fff;
-  border-radius: 12px;
+  border-radius: 20px;
   text-align: center;
-  padding: 18px 0;
+  padding: 20px 0;
   font-size: 20px;
   font-weight: 500;
   cursor: pointer;
@@ -135,13 +135,13 @@ export default {
 
 .group-title {
   font-size: 20px;
-  margin: 20px 0 10px;
+  margin: 10px 0 20px;
   color: #333;
 }
 
 .group-divider {
   height: 2px;
-  background-color: #6dd8ff;
+  background-color: #56ce5c;
   margin: 20px 0;
   border-radius: 1px;
 }
