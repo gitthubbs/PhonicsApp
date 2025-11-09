@@ -90,13 +90,13 @@ export default {
 .phonic-chart {
   background-color: #E5FFE5FF;
   width: 100%;
-  min-height: 100%;
   box-sizing: border-box;
   padding: 20px;
   -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
   align-items: center;
+  min-height: calc(100vh - 82px);
 }
 
 

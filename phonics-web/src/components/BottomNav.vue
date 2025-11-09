@@ -24,11 +24,15 @@ const currentSymbol = ref('æ') // 默认值
 
 // 从localStorage获取最后访问的音标
 const updateCurrentSymbol = () => {
-  const lastPath = localStorage.getItem('lastPhonicDetail')
-  if (lastPath) {
-    const match = lastPath.match(/\/phonic\/([^\/]+)/)
-    if (match && match[1]) {
-      currentSymbol.value = decodeURIComponent(match[1])
+  if (route.name === 'PhonicDetail') {
+    currentSymbol.value = decodeURIComponent(route.params.symbol)
+  } else {
+    const lastPath = localStorage.getItem('lastPhonicDetail')
+    if (lastPath) {
+      const match = lastPath.match(/\/phonic\/([^\/]+)/)
+      if (match && match[1]) {
+        currentSymbol.value = decodeURIComponent(match[1])
+      }
     }
   }
 }
@@ -80,17 +84,16 @@ const handleClick = (item) => {
 
 <style scoped>
 .bottom-nav {
-  position: fixed;
+  flex-shrink: 0; /* 保证底部导航不被压缩 */
+  position: relative; /* 不用 fixed 了，交给 flex 布局 */
   bottom: 0;
-  left: 50%;
+  left: 0;
   right: 0;
-  transform: translateX(-50%);
   display: flex;
   justify-content: space-around;
   background: rgba(76, 175, 80, 0.7);
   padding: 8px 0;
   box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
-  max-width: 600px;
   width: 100%;
   z-index: 10;
   backdrop-filter: blur(10px);

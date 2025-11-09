@@ -78,14 +78,40 @@ button:focus-visible {
   }
 }
 
+.phonic-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 2px 1px;
+  width: 99.5%;
+  margin: 30px 0px 20px 0px;
+  background: rgb(75, 174, 80);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 40px;
+}
+
+.back-button {
+  background: rgba(255,255,255,0.68);
+  border: none;
+  height: 88%;
+  width: 15%;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 4px 7px 4px;
+  margin: 6px;
+  color: rgba(0, 0, 0, 0.68);
+  border-radius: 45px;
+}
+
 /* 左滑进入/离开 */
 .slide-left-enter-active,
 .slide-left-leave-active {
-  transition: transform 0.45s cubic-bezier(0.25,0.8,0.25,1), opacity 0.45s ease;
+  transition: transform 0.3s cubic-bezier(.24,.24,.01,1), opacity 0.3s ease;
 }
 
 .slide-left-enter-from {
-  transform: translateX(100%);
+  transform: translateX(50%);
   opacity: 0;
 }
 
@@ -100,18 +126,18 @@ button:focus-visible {
 }
 
 .slide-left-leave-to {
-  transform: translateX(-5%);
+  transform: translateX(-50%);
   opacity: 0;
 }
 
 /* 右滑进入/离开 */
 .slide-right-enter-active,
 .slide-right-leave-active {
-  transition: transform 0.45s cubic-bezier(0.25,0.8,0.25,1), opacity 0.45s ease;
+  transition: transform 0.3s cubic-bezier(.24,.24,.01,1), opacity 0.3s ease;
 }
 
 .slide-right-enter-from {
-  transform: translateX(-100%); /* 从屏幕左侧进入 */
+  transform: translateX(-50%); /* 从屏幕左侧进入 */
   opacity: 0;
 }
 
@@ -126,6 +152,6 @@ button:focus-visible {
 }
 
 .slide-right-leave-to {
-  transform: translateX(5%);
+  transform: translateX(50%);
   opacity: 0;
 }

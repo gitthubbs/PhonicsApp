@@ -35,8 +35,7 @@
             class="sentence-card"
             v-for="(sentence, index) in highlightedSentences"
             :key="index"
-            @click="handleSentenceClick(sentence.originalText, $event)"
-            :class="{active: activeSentenceIndex === index}"
+            @click="speakSentence(sentence.originalText)"
         >
           <span v-html="sentence.highlightedText"></span>
         </div>
@@ -52,6 +51,9 @@
         <audio ref="audioPlayer" controls></audio>
       </div>
     </div>
+    <button  class="practice-button" @click="handlePracticeClick" ref="practiceBtn">
+      练习
+    </button>
   </div>
 </template>
 
@@ -62,6 +64,7 @@ import { phonicsSentences } from '../data/phonicsSentences';
 import { phonicsWords } from '../data/phonicsWords';
 import { highlightPhonics } from '../utils/highlightPhonics'
 import { TTSService } from "../services/ttsService.js";
+import {useTtsStore} from "@/store/ttsStore.js";
 
 
 export default {
@@ -79,6 +82,7 @@ export default {
     const symbol = ref(props.symbol);
     const sentences = ref(phonicsSentences[symbol.value]);
     const words = ref(phonicsWords[symbol.value]);
+    const practiceBtn = ref(null);
 
     const audioPlayer = ref(null)
     const audioPlayer0 = ref(null)
@@ -113,15 +117,15 @@ export default {
     }
 
     const handleSentenceClick = async(text, event) => {
-      const card = event.currentTarget;
-      const index = highlightedSentences.value.findIndex(s => s.originalText === text);
-      activeSentenceIndex.value = index;
-
-      card.classList.add('active');
+      // const card = event.currentTarget;
+      // const index = highlightedSentences.value.findIndex(s => s.originalText === text);
+      // activeSentenceIndex.value = index;
+      //
+      // card.classList.add('active');
       try {
         await speakSentence(text); // 等待语音播放完成
       } finally {
-        card.classList.remove('active'); // 确保无论如何都会移除active类
+
       }
 
     };
@@ -226,7 +230,6 @@ export default {
 
     const speakWord = async (text) => {
       // 清理所有例句动画
-      clearAllSentencePlayback();
       await speakWithTTS(text);
     }
 
@@ -250,7 +253,7 @@ export default {
       progressBar.style.cssText = `
         position:absolute;
         left:0; top:0; height:100%;
-        width:100%;
+        width:120%;
         transform-origin: left center;
         transform: scaleX(0);
         background: linear-gradient(to right, rgba(74,169,78,0.35), transparent);
@@ -262,7 +265,9 @@ export default {
 
       // 动画参数
       let startTime = 0;
-      const duration = 1800; // ✅ 根据你 TTS 语速调整，1.8s 非常自然
+      const store = useTtsStore();
+      const baseDuration = 1800;
+      const duration = Math.min(baseDuration / (store.rate || 1), 5000);
 
       function animateFrame(now) {
         const elapsed = now - startTime;
@@ -316,6 +321,20 @@ export default {
 
       isSpeaking = false;
       currentSpeakingText = null;
+    };
+
+    const handlePracticeClick = () => {
+      practiceBtn.value.classList.add('click-animation');
+
+      // 执行原来的nextPractice逻辑
+      setTimeout(() => {
+        goPractice();
+      }, 250);
+
+      // 300ms后移除动画类
+      setTimeout(() => {
+        practiceBtn.value.classList.remove('click-animation');
+      }, 300);
     };
 
 
@@ -393,7 +412,11 @@ export default {
     };
 
     const goBack = () => {
-      router.go(-1);
+      router.push('/phonic');
+    };
+
+    const goPractice = () => {
+      router.push({ name: 'Practice', params: { symbol: symbol.value } });
     };
 
     // 在组件挂载时预加载TTS
@@ -419,53 +442,62 @@ export default {
       audioPlayer,
       audioPlayer0,
       activeSentenceIndex,
+      practiceBtn,
       playSymbolPronunciation,
       playPronunciation,
       preloadPageTTS,
       speakWithTTS,
       speakWord,
+      speakSentence,
       clickWord,
-      handleSentenceClick,
       startRecording,
       stopRecording,
-      goBack }
+      handlePracticeClick,
+       goBack,
+       goPractice }
   }
 }
 </script>
 
 <style scoped>
 .phonic-detail {
-  max-width: 530px;
+  position: relative;
+  max-width: 600px;
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
   padding: 15px 20px;
+  margin: 0 auto;
   font-family: 'Segoe UI', Roboto, sans-serif;
   color: #333;
   background: #E5FFE5FF;
+  min-height: calc(100vh - 82px);
 }
 
-.phonic-detail-header {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 2px 1px;
-  width: 99.5%;
-  margin: 30px 0px 10px 0px;
-  background: rgb(75, 174, 80);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 40px;
-}
-
-.back-button {
-  background: rgba(255,255,255,0.68);
+.practice-button{
+  position: fixed;
+  right: -10px;
+  bottom: 100px;
+  padding: 12px 24px;
+  background: #4caf50;
+  color: white;
   border: none;
-  height: 88%;
-  width: 15%;
-  font-size: 25px;
+  border-radius: 50px 0 0 50px;
+  margin: 10px 0;
   cursor: pointer;
-  padding: 4px 4px 7px 4px;
-  margin: 6px;
-  color: rgba(0, 0, 0, 0.68);
-  border-radius: 45px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  z-index: 100;
+  transition: all 0.3s ease;
+}
+
+.practice-button.click-animation {
+  transform: translateX(-10px);
+}
+
+@media (min-width: 601px) {
+  .practice-button {
+    right: calc(50% - 310px);
+  }
 }
 
 .pronunciation-symbol-button {
@@ -534,7 +566,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #f0f0f0;
+  background: #fdf5e6;
   padding: 12px 16px;
   border-radius: 10px;
   flex: 1 0 120px;

@@ -1,11 +1,74 @@
 <script setup>
 
-import { onMounted } from 'vue';
+import {onMounted, onUnmounted, ref, watch} from 'vue';
+import { useRoute } from 'vue-router'
+import { routeOrder } from './router/index.js'
 import { TTSService } from '@/services/ttsService.js';
 import BottomNav from '@/components/BottomNav.vue';
 
+const route = useRoute()
+const transitionName = ref('slide-left')
+
+let lastPageOrder = null
+
+watch(
+    () => route.name,
+    (newName, oldName) => {
+      if (!oldName) {
+        lastPageOrder = routeOrder[newName] ?? 0
+        return
+      }
+
+      const oldOrder = routeOrder[oldName] ?? 0
+      const newOrder = routeOrder[newName] ?? 0
+
+      // 从左到右 → slide-left
+      // 从右到左 → slide-right
+      transitionName.value = newOrder > oldOrder ? 'slide-left' : 'slide-right'
+
+      lastPageOrder = newOrder
+    }
+)
+
 onMounted(async () => {
   await TTSService.preloadTTS('en-GB'); // 英式英语
+
+  const scrollable = document.querySelector('.scrollable-content');
+  const bottomNav = document.querySelector('.bottom-nav');
+
+  if (!scrollable || !bottomNav) return;
+
+  function adjustPadding() {
+
+    // Safari/iOS safe area bottom inset
+    const safeAreaInsetBottom = parseInt(
+        getComputedStyle(document.documentElement).getPropertyValue('--sat-env-inset-bottom')
+    ) || 0;
+
+    scrollable.style.paddingBottom = `${safeAreaInsetBottom}px`;
+  }
+
+  // 设置 CSS 变量，兼容 Safari 安全区
+  document.documentElement.style.setProperty(
+      '--sat-env-inset-bottom',
+      `${window.innerHeight - document.documentElement.clientHeight}px`
+  );
+
+  adjustPadding();
+  window.addEventListener('resize', adjustPadding);
+
+  // 每次路由切换时，强制置顶
+  watch(
+      () => route.fullPath,
+      () => {
+        scrollable.scrollTop = 0;
+      },
+      { immediate: true } // 页面初次加载也置顶
+  );
+
+  onUnmounted(() => {
+    window.removeEventListener('resize', adjustPadding);
+  });
 });
 
 
@@ -13,65 +76,48 @@ onMounted(async () => {
 
 <template>
       <div class="app-container">
-        <router-view v-slot="{ Component, route }">
-          <transition :name="route.meta.transition || 'fade'">
-            <component :is="Component" />
-          </transition>
-        </router-view>
+        <!-- 滚动内容区域 -->
+        <div class="scrollable-content">
+          <router-view v-slot="{ Component, route }">
+            <transition :name="transitionName" mode="out-in">
+              <component :is="Component" :key="route.fullPath" />
+            </transition>
+          </router-view>
+        </div>
+        <!-- 固定底部导航 -->
         <BottomNav />
       </div>
 </template>
 
 <style>
 
-/* 页面切换动画 */
-.slide-enter-active,
-.slide-leave-active {
-  transition: all 0.3s ease;
-}
-
-.slide-enter-from {
-  transform: translateX(-100%);
-  opacity: 0;
-}
-
-.slide-leave-to {
-  transform: translateX(100%);
-  opacity: 0;
-}
-
-
 html, body, #app {
+  display: flex;
+  flex-direction: column;
   margin: 0;
   padding: 0;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  justify-content: center;
 }
 
 .app-container {
-  background-color: #E5FFE5FF;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
   width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  box-sizing: border-box;
+  height: 100vh;
   max-width: 600px;
   margin: 0 auto;
-  padding-bottom: 82px;
+  overflow-x: hidden;
+  background-color: #E5FFE5FF;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
+.scrollable-content {
+  flex: 1 1 auto; /* 占据剩余空间 */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: env(safe-area-inset-bottom, 0); /* iOS 安全区 */
+  scroll-behavior: auto;
 }
 </style>
