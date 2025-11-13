@@ -219,3 +219,5 @@ export const phonicsWords = {
         { text: 'bridge' },
     ],
 };
+
+export const phonicsSymbols = Object.keys(phonicsWords);

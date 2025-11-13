@@ -6,6 +6,7 @@ export const useTtsStore = defineStore('tts', {
         pitch: 1.0,
         locale: 'en-GB',
         voiceName: null,
+        ttsEnabled: true
     }),
 
     actions: {
@@ -16,6 +17,10 @@ export const useTtsStore = defineStore('tts', {
         setVoice(v) {
             this.voiceName = v
             this.save()
+        },
+        setTtsEnabled(enabled) {
+            this.ttsEnabled = enabled;
+            this.save();
         },
 
         save() {

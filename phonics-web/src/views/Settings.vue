@@ -5,6 +5,7 @@
     </div>
     <h2 class="settings-main">设置</h2>
     <div class="settings-content">
+
       <div class="setting-item">
         <h3>语速 Rate</h3>
         <input
@@ -19,8 +20,23 @@
       </div>
 
       <div class="setting-item">
-        <h3>声音 (Voice)</h3>
-        <select v-model="store.voiceName" @change="store.setVoice(store.voiceName)" :disabled="isSafari">
+        <h3>声音 Voice</h3>
+
+        <select
+            v-if="isAndroidCapacitor"
+            v-model="store.voiceName"
+            @change="store.setVoice(store.voiceName)"
+        >
+          <option
+              v-for="v in voices"
+              :key="v.name"
+              :value="v.name"
+          >
+            {{ v.name }}
+          </option>
+        </select>
+
+        <select v-else v-model="store.voiceName" @change="store.setVoice(store.voiceName)" :disabled="isSafari">
           <option v-for="voice in voices.filter(v => v.lang.includes('en-GB') || v.lang.includes('en-US'))"
                   :key="voice.name"
                   :value="voice.name"
@@ -31,6 +47,18 @@
         <div v-if="isSafari" class="safari-notice">
           现在的环境下只支持一种声音
         </div>
+      </div>
+
+      <div class="setting-item">
+        <h3>语音合成</h3>
+        <label>
+          <input
+              type="checkbox"
+              v-model="store.ttsEnabled"
+              @change="store.setTtsEnabled($event.target.checked)"
+          >
+          启用语音合成（禁用会导致例句无法播放）
+        </label>
       </div>
 
       <div class="setting-item">
@@ -49,6 +77,8 @@ import {ref, onMounted, computed} from 'vue';
 import { TTSService } from '@/services/ttsService.js';
 import { useTtsStore } from '@/store/ttsStore.js';
 import router from "@/router/index.js";
+import { Capacitor } from '@capacitor/core';
+
 
 const store = useTtsStore()
 const voices = ref([]);
@@ -59,49 +89,65 @@ const ttsOptions = ref({
   voiceName: 'Samantha',
 });
 
+const platform = Capacitor.getPlatform();
+
 const isSafari = /(^((?!chrome|android).)*safari|iphone|ipad|ipod)/i.test(navigator.userAgent)
     || /micromessenger/i.test(navigator.userAgent);
 const isChrome = /chrome/i.test(navigator.userAgent);
 const isSorCWebKit = isSafari || isChrome;
+const isAndroidCapacitor = platform === 'android';
+const isIOSCapacitor = platform === 'ios';
+
 
 const goBack = () => {
   router.push('/phonic');
 };
 
 onMounted(async () => {
-  store.loadFromStorage()
-  function loadVoices() {
-    const list = speechSynthesis.getVoices()
-    if (list.length > 0) {
-      voices.value = list
-      if (!store.voiceName) {
-        const defaultVoice = isSafari
-            ? list.find(v => v.name === 'Samantha')
-            : list.find(v => v.lang.includes(store.locale)) || list[0];
-        if (defaultVoice) {
-          store.setVoice(defaultVoice.name);
+  store.loadFromStorage();
+
+  if (isAndroidCapacitor) {
+    // Android：获取系统 voices
+    try {
+      const res = await window.capacitor.Plugins.TextToSpeech.getSupportedVoices();
+      voices.value = res.voices || [];
+      console.log("Android voices:", voices.value);
+
+      if (!voices.value.some(v => v.name === store.voiceName)) {
+        store.setVoice(voices.value[0]?.name || '');
+      }
+    } catch (err) {
+      console.warn("获取 Android 语音列表失败:", err);
+    }
+  } else {
+    // WEB 浏览器：加载 speechSynthesis voices
+    function loadWebVoices() {
+      const list = speechSynthesis.getVoices();
+      if (list.length > 0) {
+        voices.value = list;
+        if (!store.voiceName) {
+          const fallback = list.find(v => v.lang.includes('en')) || list[0];
+          store.setVoice(fallback?.name);
         }
       }
     }
+
+    loadWebVoices();
+    window.speechSynthesis.onvoiceschanged = loadWebVoices;
   }
-
-  // 立即尝试加载
-  loadVoices()
-
-  // 监听 voice 加载事件（Safari 必须）
-  window.speechSynthesis.onvoiceschanged = loadVoices
 });
 
 const testTTS = async () => {
 
-  await TTSService.speakWithWebAPI(
+  console.log('开始测试TTS...');
+  await TTSService.speak(
       'This is a test of the selected voice settings.',
       {
     rate: store.rate,
     pitch: store.pitch,
-    locale: store.locale,
-    voiceName: store.voiceName
+    voiceName: store.voiceName,
   });
+  console.log('TTS测试完成');
 };
 </script>
 

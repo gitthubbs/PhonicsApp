@@ -1,16 +1,20 @@
 import { useTtsStore } from '@/store/ttsStore.js'
+import { Capacitor } from '@capacitor/core';
 
 export class TTSService {
 
     static currentUtterance = null;
     static isCancelling = false;
     static utteranceCache = new Map();
+    static voicesReady = false;
 
     static async preloadTTS(locale = 'en-GB') {
         try {
             if (!('speechSynthesis' in window)) {
                 throw new Error('浏览器不支持语音合成API');
             }
+
+            await this.ensureVoicesLoaded();
 
             // 预加载语音列表，初始化语音合成引擎
             const voices = await this.getAvailableVoices();
@@ -22,6 +26,30 @@ export class TTSService {
         }
     }
 
+    static ensureVoicesLoaded() {
+        return new Promise(resolve => {
+            const synth = window.speechSynthesis;
+
+            const voices = synth.getVoices();
+            if (voices && voices.length > 0) {
+                this.voicesReady = true;
+                resolve();
+                return;
+            }
+
+            // 监听 voices 加载
+            const handler = () => {
+                this.voicesReady = true;
+                synth.removeEventListener('voiceschanged', handler);
+                resolve();
+            };
+
+            synth.addEventListener('voiceschanged', handler);
+            // 兜底触发
+            synth.getVoices();
+        });
+    }
+
     static async preloadPageTTS(texts, options = {}) {
         try {
             // 预加载页面所有文本的TTS
@@ -31,10 +59,10 @@ export class TTSService {
                 this.utteranceCache.set(text, this.setUtterance(text, options));
             });
 
-            console.log('页面TTS预加载完成');
+            console.log('页面TTS服务预加载完成');
             return true;
         } catch (error) {
-            console.warn('页面TTS预加载失败:', error);
+            console.warn('页面TTS服务预加载失败:', error);
             return false;
         }
     }
@@ -46,24 +74,23 @@ export class TTSService {
     }
 
     static async speak(text, options = {}) {
-        // 首先尝试 Capacitor 插件（适用于 Android）
-        if (window.capacitor && window.capacitor.Plugins && window.capacitor.Plugins.TextToSpeech) {
+        const platform = Capacitor.getPlatform();
+        const isAndroid = platform === 'android';
+        console.log('平台:', platform);
+        if (isAndroid) {
             try {
+                console.log('尝试使用 Capacitor TTS...');
                 return await this.speakWithCapacitor(text, options);
-            } catch (error) {
-                console.warn('Capacitor TTS 失败，尝试 Web Speech API');
-                // 如果 Capacitor 失败，回退到 Web Speech API
+            } catch (e) {
+                console.warn('Capacitor TTS 失败，回退到 Web API:', e);
                 return await this.speakWithWebAPI(text, options);
             }
         }
-        // 其次尝试 Web Speech API（适用于所有现代浏览器）
-        else if ('speechSynthesis' in window) {
-            return await this.speakWithWebAPI(text, options);
-        }
-        // 如果都不支持，抛出错误
         else {
-            throw new Error('TTS 功能在当前环境中不可用');
-        }
+                console.log('Web API TTS :', text);
+                return await this.speakWithWebAPI(text, options);
+            }
+
     }
 
 
@@ -73,7 +100,6 @@ export class TTSService {
         const utterance = new SpeechSynthesisUtterance(text);
 
         const voices = speechSynthesis.getVoices()
-        console.log(voices)
 
         const savedVoiceName = localStorage.getItem('tts-settings')
             ? JSON.parse(localStorage.getItem('tts-settings')).voiceName
@@ -163,16 +189,19 @@ export class TTSService {
     }
 
     static async speakWithCapacitor(text, options = {}) {
+        const store = useTtsStore();
+
         try {
             return await window.capacitor.Plugins.TextToSpeech.speak({
-                text: text,
-                rate: options.rate || 0.7,
-                pitch: options.pitch || 1.0,
-                locale: options.locale || 'en-GB'
+                text,
+                rate: store.rate,         // ✅ 与 Pinia 设置同步
+                pitch: 1.0,
+                locale: store.locale,     // ✅ en-GB / en-US
+                voice: store.voiceName    // ✅ 用户选的 voice
             });
-        } catch (error) {
-            console.error('Capacitor TTS 播放失败:', error);
-            throw new Error('Android TTS 播放失败');
+        } catch (e) {
+            console.error("Capacitor TTS 播放失败:", e);
+            throw e;
         }
     }
 

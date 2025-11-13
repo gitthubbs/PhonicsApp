@@ -84,8 +84,8 @@ const handleClick = (item) => {
 
 <style scoped>
 .bottom-nav {
-  flex-shrink: 0; /* 保证底部导航不被压缩 */
-  position: relative; /* 不用 fixed 了，交给 flex 布局 */
+  flex-shrink: 0;
+  position: relative;
   bottom: 0;
   left: 0;
   right: 0;

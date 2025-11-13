@@ -5,11 +5,24 @@ import { useRoute } from 'vue-router'
 import { routeOrder } from './router/index.js'
 import { TTSService } from '@/services/ttsService.js';
 import BottomNav from '@/components/BottomNav.vue';
+import { TextToSpeech } from '@capacitor-community/text-to-speech';
+window.capacitor = { Plugins: { TextToSpeech } };
 
 const route = useRoute()
 const transitionName = ref('slide-left')
+const scrollable =ref(null)
 
 let lastPageOrder = null
+
+function adjustPadding() {
+
+  // Safari/iOS safe area bottom inset
+  const safeAreaInsetBottom = parseInt(
+      getComputedStyle(document.documentElement).getPropertyValue('--sat-env-inset-bottom')
+  ) || 0;
+
+  scrollable.value.style.paddingBottom = `${safeAreaInsetBottom}px`;
+}
 
 watch(
     () => route.name,
@@ -33,20 +46,9 @@ watch(
 onMounted(async () => {
   await TTSService.preloadTTS('en-GB'); // 英式英语
 
-  const scrollable = document.querySelector('.scrollable-content');
-  const bottomNav = document.querySelector('.bottom-nav');
+  scrollable.value = document.querySelector('.scrollable-content');
 
-  if (!scrollable || !bottomNav) return;
-
-  function adjustPadding() {
-
-    // Safari/iOS safe area bottom inset
-    const safeAreaInsetBottom = parseInt(
-        getComputedStyle(document.documentElement).getPropertyValue('--sat-env-inset-bottom')
-    ) || 0;
-
-    scrollable.style.paddingBottom = `${safeAreaInsetBottom}px`;
-  }
+  if (!scrollable.value) return;
 
   // 设置 CSS 变量，兼容 Safari 安全区
   document.documentElement.style.setProperty(
@@ -61,16 +63,16 @@ onMounted(async () => {
   watch(
       () => route.fullPath,
       () => {
-        scrollable.scrollTop = 0;
+        scrollable.value.scrollTop = 0;
       },
       { immediate: true } // 页面初次加载也置顶
   );
 
-  onUnmounted(() => {
-    window.removeEventListener('resize', adjustPadding);
-  });
 });
 
+onUnmounted(() => {
+  window.removeEventListener('resize', adjustPadding);
+});
 
 </script>
 

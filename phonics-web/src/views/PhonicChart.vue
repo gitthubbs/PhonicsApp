@@ -28,41 +28,13 @@
 <script>
 import { useRouter } from 'vue-router'
 import {ref} from "vue";
+import { phonicsGroups } from '@/data/phonicsGroups.js'
 
 export default {
   name: 'PhonicChart',
   setup() {
     const router = useRouter();
-
-    // 分组音标
-    const phonicsGroups = [
-      {
-        title: '元音 (Vowels)',
-        items: [
-          { symbol: 'iː' }, { symbol: 'ɪ' }, { symbol: 'e' }, { symbol: 'æ' },
-          { symbol: 'ɑː' }, { symbol: 'ɒ' }, { symbol: 'ɔː' }, { symbol: 'ʊ' },
-          { symbol: 'uː' }, { symbol: 'ʌ' }, { symbol: 'ɜː' }, { symbol: 'ə' }
-        ]
-      },
-      {
-        title: '双元音 (Diphthongs)',
-        items: [
-          { symbol: 'eɪ' }, { symbol: 'aɪ' }, { symbol: 'ɔɪ' }, { symbol: 'aʊ' },
-          { symbol: 'əʊ' }, { symbol: 'ɪə' }, { symbol: 'eə' }, { symbol: 'ʊə' }
-        ]
-      },
-      {
-        title: '辅音 (Consonants)',
-        items: [
-          { symbol: 'p' }, { symbol: 'b' }, { symbol: 't' }, { symbol: 'd' },
-          { symbol: 'k' }, { symbol: 'g' }, { symbol: 'f' }, { symbol: 'v' },
-          { symbol: 'θ' }, { symbol: 'ð' }, { symbol: 's' }, { symbol: 'z' },
-          { symbol: 'ʃ' }, { symbol: 'ʒ' }, { symbol: 'h' }, { symbol: 'm' },
-          { symbol: 'n' }, { symbol: 'ŋ' }, { symbol: 'l' }, { symbol: 'r' },
-          { symbol: 'j' }, { symbol: 'w' }
-        ]
-      }
-    ];
+    
     const goToDetail = (symbol) => {
       router.push({ name: 'PhonicDetail', params: { symbol } });
     };
@@ -115,7 +87,10 @@ export default {
 
 .phonetic-card {
   flex: 0 0 calc(25% - 9px); /* 四个卡片一行 */
-  background-color: #56ce5c;
+  background: linear-gradient(145deg, #66d96c, #4cc052);
+  box-shadow: 5px 5px 15px rgba(0,0,0,0.3),
+  inset 2px 2px 5px rgba(255,255,255,0.5),
+  inset -3px -3px 7px rgba(0,0,0,0.2);
   color: #fff;
   border-radius: 20px;
   text-align: center;
@@ -123,14 +98,15 @@ export default {
   font-size: 20px;
   font-weight: 500;
   cursor: pointer;
-  box-shadow: 2px 4px 10px rgba(0,0,0,0.5);
   transition: all 0.3s ease;
 }
 
 .phonetic-card.active {
   transform: scale(0.95);
-  background-color: #3da543;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  background: linear-gradient(145deg, #4dae52, #3da543);
+  box-shadow: 2px 2px 10px rgba(0,0,0,0.3),
+  inset 1px 1px 3px rgba(255,255,255,0.3),
+  inset -2px -2px 5px rgba(0,0,0,0.3);
 }
 
 .group-title {

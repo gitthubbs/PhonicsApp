@@ -13,7 +13,7 @@
 
     <!-- 例词区域 -->
     <div class="section">
-      <h2>例词 (Words)</h2>
+      <h2>例词 Words</h2>
       <div class="words-list">
         <div
             class="word-card"
@@ -29,7 +29,7 @@
 
     <!-- 例句区域 -->
     <div class="section">
-      <h2>例句 (Sentences)</h2>
+      <h2>例句 Sentences</h2>
       <div class="sentences-list">
         <div
             class="sentence-card"
@@ -84,6 +84,8 @@ export default {
     const words = ref(phonicsWords[symbol.value]);
     const practiceBtn = ref(null);
 
+    const store = useTtsStore();
+
     const audioPlayer = ref(null)
     const audioPlayer0 = ref(null)
 
@@ -115,21 +117,6 @@ export default {
     const clickWord = index => {
       activeWordIndex.value = index
     }
-
-    const handleSentenceClick = async(text, event) => {
-      // const card = event.currentTarget;
-      // const index = highlightedSentences.value.findIndex(s => s.originalText === text);
-      // activeSentenceIndex.value = index;
-      //
-      // card.classList.add('active');
-      try {
-        await speakSentence(text); // 等待语音播放完成
-      } finally {
-
-      }
-
-    };
-
 
     // 预加载当前页面的所有TTS
     const preloadPageTTS = async () => {
@@ -228,13 +215,25 @@ export default {
     let isSpeaking = false;
     let currentSpeakingText = null;
 
+
     const speakWord = async (text) => {
-      // 清理所有例句动画
-      await speakWithTTS(text);
+
+      if (store.ttsEnabled) {
+        // 使用TTS语音合成
+        await speakWithTTS(text);
+      } else {
+        // 使用预录制的音频文件
+        await playPronunciation(text);
+      }
     }
 
 
     const speakSentence = async (text) => {
+
+      if (!store.ttsEnabled) {
+        alert('语音合成功能已禁用，请启用后使用');
+        return;
+      }
       // 绑定到被点击的卡片
       const index = highlightedSentences.value.findIndex(s => s.originalText === text);
       activeSentenceIndex.value = index;
@@ -265,7 +264,6 @@ export default {
 
       // 动画参数
       let startTime = 0;
-      const store = useTtsStore();
       const baseDuration = 1800;
       const duration = Math.min(baseDuration / (store.rate || 1), 5000);
 
@@ -324,6 +322,7 @@ export default {
     };
 
     const handlePracticeClick = () => {
+      if (!practiceBtn.value) return;
       practiceBtn.value.classList.add('click-animation');
 
       // 执行原来的nextPractice逻辑
@@ -332,8 +331,11 @@ export default {
       }, 250);
 
       // 300ms后移除动画类
-      setTimeout(() => {
-        practiceBtn.value.classList.remove('click-animation');
+      const timer = setTimeout(() => {
+        if (practiceBtn.value) {
+          practiceBtn.value.classList.remove('click-animation');
+        }
+        clearTimeout(timer); // 清理定时器
       }, 300);
     };
 
@@ -416,7 +418,7 @@ export default {
     };
 
     const goPractice = () => {
-      router.push({ name: 'Practice', params: { symbol: symbol.value } });
+      router.push({ name: 'Practice'});
     };
 
     // 在组件挂载时预加载TTS
@@ -496,7 +498,7 @@ export default {
 
 @media (min-width: 601px) {
   .practice-button {
-    right: calc(50% - 310px);
+    right: calc(50% - 311px);
   }
 }
 
@@ -518,19 +520,23 @@ export default {
   cursor: pointer;
   color: white;
   background: rgba(75, 173, 79, 0.51);
+  box-shadow: inset 1px 1px 5px rgba(255,255,255,0.8),
+  inset -1px -1px 5px rgba(0,0,0,0.1);
   transition: transform 0.2s;
 }
 
 
 .symbol-card {
-  background: #4CAF50;
+  background: linear-gradient(145deg, #66d96c, #4cc052);
+  box-shadow: 5px 5px 15px rgba(0,0,0,0.3),
+  inset 2px 2px 5px rgba(255,255,255,0.5),
+  inset -3px -3px 7px rgba(0,0,0,0.2);
   color: #fff;
   padding: 40px 20px;
   text-align: center;
   align-content: space-between;
   border-radius: 12px;
   margin-bottom: 20px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
   position: relative;
   width: 100%;
   box-sizing: border-box;
@@ -553,7 +559,7 @@ export default {
   padding-left: 8px;
   background: #93c593;
   border-radius: 12px;
-  box-shadow: 2px 4px 10px rgba(0,0,0,0.5);
+  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
 }
 
 .words-list {
@@ -570,7 +576,9 @@ export default {
   padding: 12px 16px;
   border-radius: 10px;
   flex: 1 0 120px;
-  box-shadow: 2px 4px 10px rgba(0,0,0,0.5);
+  box-shadow: 3px 3px 10px rgba(0,0,0,0.3),
+  inset 2px 2px 5px rgba(255,255,255,0.8),
+  inset -2px -2px 5px rgba(0,0,0,0.1);
   transition: transform 0.2s;
 }
 
@@ -587,9 +595,11 @@ export default {
 
 .sentence-card {
   background: #fdf5e6;
+  box-shadow: 3px 3px 10px rgba(0,0,0,0.3),
+  inset 2px 2px 5px rgba(255,255,255,0.8),
+  inset -2px -2px 5px rgba(0,0,0,0.1);
   padding: 12px 16px;
   border-radius: 8px;
-  box-shadow: 2px 4px 10px rgba(0,0,0,0.5);
   position: relative;
   overflow: hidden;
   transition: all 0.3s;
