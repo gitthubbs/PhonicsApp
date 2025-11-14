@@ -1,125 +1,113 @@
-<script setup>
+<template>
+  <div class="app-container">
+    <!-- 滚动内容 -->
+    <div class="scrollable-content" ref="scrollable">
+      <router-view v-slot="{ Component, route }">
+        <transition :name="transitionName" mode="out-in">
+          <component :is="Component" :key="route.fullPath" />
+        </transition>
+      </router-view>
+    </div>
 
-import {onMounted, onUnmounted, ref, watch} from 'vue';
-import { useRoute } from 'vue-router'
-import { routeOrder } from './router/index.js'
+    <!-- 固定底部导航 -->
+    <div class="bottom-nav">
+      <BottomNav />
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
+import { routeOrder } from './router/index.js';
 import { TTSService } from '@/services/ttsService.js';
 import BottomNav from '@/components/BottomNav.vue';
-import { TextToSpeech } from '@capacitor-community/text-to-speech';
-window.capacitor = { Plugins: { TextToSpeech } };
 
-const route = useRoute()
-const transitionName = ref('slide-left')
-const scrollable =ref(null)
+const route = useRoute();
+const transitionName = ref('slide-left');
+const scrollable = ref(null);
 
-let lastPageOrder = null
+let lastPageOrder = null;
 
-function adjustPadding() {
-
-  // Safari/iOS safe area bottom inset
-  const safeAreaInsetBottom = parseInt(
-      getComputedStyle(document.documentElement).getPropertyValue('--sat-env-inset-bottom')
-  ) || 0;
-
-  scrollable.value.style.paddingBottom = `${safeAreaInsetBottom}px`;
+// 动态计算内容高度
+function adjustContentHeight() {
+  const vh = window.innerHeight;
+  const bottomNav = 82; // 你底部 nav 的固定高度，单位 px
+  if (scrollable.value) {
+    scrollable.value.style.height = `${vh - bottomNav}px`;
+  }
 }
 
 watch(
     () => route.name,
     (newName, oldName) => {
       if (!oldName) {
-        lastPageOrder = routeOrder[newName] ?? 0
-        return
+        lastPageOrder = routeOrder[newName] ?? 0;
+        return;
       }
-
-      const oldOrder = routeOrder[oldName] ?? 0
-      const newOrder = routeOrder[newName] ?? 0
-
-      // 从左到右 → slide-left
-      // 从右到左 → slide-right
-      transitionName.value = newOrder > oldOrder ? 'slide-left' : 'slide-right'
-
-      lastPageOrder = newOrder
+      const oldOrder = routeOrder[oldName] ?? 0;
+      const newOrder = routeOrder[newName] ?? 0;
+      transitionName.value = newOrder > oldOrder ? 'slide-left' : 'slide-right';
+      lastPageOrder = newOrder;
     }
-)
+);
 
 onMounted(async () => {
-  await TTSService.preloadTTS('en-GB'); // 英式英语
-
+  await TTSService.preloadTTS('en-GB');
   scrollable.value = document.querySelector('.scrollable-content');
 
-  if (!scrollable.value) return;
+  adjustContentHeight();
+  window.addEventListener('resize', adjustContentHeight);
 
-  // 设置 CSS 变量，兼容 Safari 安全区
-  document.documentElement.style.setProperty(
-      '--sat-env-inset-bottom',
-      `${window.innerHeight - document.documentElement.clientHeight}px`
-  );
-
-  adjustPadding();
-  window.addEventListener('resize', adjustPadding);
-
-  // 每次路由切换时，强制置顶
   watch(
       () => route.fullPath,
       () => {
         scrollable.value.scrollTop = 0;
       },
-      { immediate: true } // 页面初次加载也置顶
+      { immediate: true }
   );
-
 });
-
-onUnmounted(() => {
-  window.removeEventListener('resize', adjustPadding);
-});
-
 </script>
 
-<template>
-      <div class="app-container">
-        <!-- 滚动内容区域 -->
-        <div class="scrollable-content">
-          <router-view v-slot="{ Component, route }">
-            <transition :name="transitionName" mode="out-in">
-              <component :is="Component" :key="route.fullPath" />
-            </transition>
-          </router-view>
-        </div>
-        <!-- 固定底部导航 -->
-        <BottomNav />
-      </div>
-</template>
-
 <style>
-
 html, body, #app {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
+  height: 100%;
+  width:100%;
+  margin: 0 auto;
+  max-width: 530px;
   padding: 0;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
+  overflow: hidden; /* 禁止整个页面滚动 */
 }
 
 .app-container {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
   width: 100%;
-  height: 100vh;
   max-width: 600px;
+  height: 100%;
   margin: 0 auto;
-  overflow-x: hidden;
-  background-color: #E5FFE5FF;
+  background: #E5FFE5FF;
 }
 
+/* 滚动区域 */
 .scrollable-content {
-  flex: 1 1 auto; /* 占据剩余空间 */
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: env(safe-area-inset-bottom, 0); /* iOS 安全区 */
-  scroll-behavior: auto;
+  -webkit-overflow-scrolling: touch; /* iOS 惯性滚动 */
+  scroll-behavior: smooth;
+}
+
+/* 底部固定导航 */
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0 auto;
+  max-width: 530px;
+  height: 82px; /* 固定高度 */
+  padding-bottom: env(safe-area-inset-bottom);
+  background: #fff;
+  box-shadow: 0 -2px 6px rgba(0,0,0,0.1);
+  z-index: 1000;
 }
 </style>

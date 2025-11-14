@@ -181,7 +181,7 @@ export default {
     const speakWithTTS = async (text, options = {}) => {
       try {
         console.log('开始TTS播放:', text);
-        await TTSService.speakWithWebAPI(text, options);
+        await TTSService.speak(text, options);
         console.log('TTS播放完成:', text);
       } catch (error) {
         console.error('TTS播放失败:', error);
@@ -190,24 +190,31 @@ export default {
     };
 
     // ✅ 清除所有句子的播放动画 + RAF + active 状态
-    function clearAllSentencePlayback() {
-      window.speechSynthesis.cancel(); // 停止 TTS
+    async function clearAllSentencePlayback() {
 
-      document.querySelectorAll(".sentence-card").forEach(card => {
-        // 取消高亮
-        card.classList.remove("active");
+      try {
+        // ★ 安全判断 — 仅在 Web 浏览器环境存在时调用
+        if (typeof window !== 'undefined' && window.speechSynthesis) {
+          window.speechSynthesis.cancel();
+        } else if (TTSService && TTSService.cancel) {
+          // ★ 在 Capacitor 环境中使用插件提供的取消逻辑
+          await TTSService.cancel();
+        } else {
+          console.warn('没有可用的语音取消方法');
+        }
+      } catch (err) {
+        console.error('TTS 停止失败:', err);
+      }
 
-        // 移除进度条
-        const bar = card.querySelector(".progress-bar");
-        if (bar) bar.remove();
+    document.querySelectorAll(".sentence-card").forEach(card => {
+      card.classList.remove("active");
+      const bar = card.querySelector(".progress-bar");
+      if (bar) bar.remove();
 
-        // 取消 RAF 动画
-        const rafId = sentenceRafMap.get(card);
-        if (rafId) cancelAnimationFrame(rafId);
-
-        // 清理 Map
-        sentenceRafMap.delete(card);
-      });
+      const rafId = sentenceRafMap.get(card);
+      if (rafId) cancelAnimationFrame(rafId);
+      sentenceRafMap.delete(card);
+    });
     }
 
     const sentenceRafMap = new Map();
@@ -283,7 +290,7 @@ export default {
       }
 
 
-      await TTSService.speakWithWebAPI(text, {
+      await TTSService.speak(text, {
         rate: 0.8,
         pitch: 1.0,
         locale: 'en-GB',
@@ -496,9 +503,9 @@ export default {
   transform: translateX(-10px);
 }
 
-@media (min-width: 601px) {
+@media (min-width: 531px) {
   .practice-button {
-    right: calc(50% - 311px);
+    right: calc(50% - 275px);
   }
 }
 

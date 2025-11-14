@@ -108,16 +108,18 @@ onMounted(async () => {
 
   if (isAndroidCapacitor) {
     // Android：获取系统 voices
-    try {
-      const res = await window.capacitor.Plugins.TextToSpeech.getSupportedVoices();
-      voices.value = res.voices || [];
-      console.log("Android voices:", voices.value);
+    if (window.capacitor?.Plugins?.TextToSpeech) {
+      try {
+        const res = await window.capacitor.Plugins.TextToSpeech.getSupportedVoices();
+        voices.value = res.voices || [];
+        console.log("Android voices:", voices.value);
 
-      if (!voices.value.some(v => v.name === store.voiceName)) {
-        store.setVoice(voices.value[0]?.name || '');
+        if (!voices.value.some(v => v.name === store.voiceName)) {
+          store.setVoice(voices.value[0]?.name || '');
+        }
+      } catch (err) {
+        console.warn("获取 Android 语音列表失败:", err);
       }
-    } catch (err) {
-      console.warn("获取 Android 语音列表失败:", err);
     }
   } else {
     // WEB 浏览器：加载 speechSynthesis voices

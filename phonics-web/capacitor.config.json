@@ -2,5 +2,10 @@
   "appId": "com.ray.phonicsapp",
   "appName": "PhonicsApp",
   "webDir": "dist",
-  "bundledWebRuntime": false
+  "bundledWebRuntime": false,
+  "plugins": {
+    "TextToSpeech": {
+      "voice": "en-GB"
+    }
+  }
 }

@@ -1,5 +1,6 @@
 import { useTtsStore } from '@/store/ttsStore.js'
 import { Capacitor } from '@capacitor/core';
+import {TextToSpeech} from "@capacitor-community/text-to-speech";
 
 export class TTSService {
 
@@ -75,9 +76,8 @@ export class TTSService {
 
     static async speak(text, options = {}) {
         const platform = Capacitor.getPlatform();
-        const isAndroid = platform === 'android';
         console.log('平台:', platform);
-        if (isAndroid) {
+        if (Capacitor.isNativePlatform()) {
             try {
                 console.log('尝试使用 Capacitor TTS...');
                 return await this.speakWithCapacitor(text, options);
@@ -190,32 +190,29 @@ export class TTSService {
 
     static async speakWithCapacitor(text, options = {}) {
         const store = useTtsStore();
-
         try {
-            return await window.capacitor.Plugins.TextToSpeech.speak({
+            await TextToSpeech.speak({
                 text,
-                rate: store.rate,         // ✅ 与 Pinia 设置同步
+                lang: store.locale || 'en-GB',
+                rate: store.rate || 1.0,
                 pitch: 1.0,
-                locale: store.locale,     // ✅ en-GB / en-US
-                voice: store.voiceName    // ✅ 用户选的 voice
+                volume: 1.0,
             });
+            console.log('Capacitor TTS 播放成功');
         } catch (e) {
-            console.error("Capacitor TTS 播放失败:", e);
+            console.error('Capacitor TTS 播放失败:', e);
             throw e;
         }
     }
 
     static async getAvailableVoices() {
         // 首先尝试 Capacitor 插件
-        if (window.capacitor && window.capacitor.Plugins && window.capacitor.Plugins.TextToSpeech) {
+        if (Capacitor.isNativePlatform()) {
             try {
-                return await window.capacitor.Plugins.TextToSpeech.getSupportedVoices();
+                const res = await TextToSpeech.getSupportedVoices();
+                return res.voices || [];
             } catch (error) {
-                console.warn('获取 Capacitor 语音列表失败，尝试 Web Speech API');
-                // 如果 Capacitor 失败，回退到 Web Speech API
-                if ('speechSynthesis' in window) {
-                    return window.speechSynthesis.getVoices();
-                }
+                console.warn('获取 Capacitor 语音列表失败');
             }
         }
         // 其次使用 Web Speech API

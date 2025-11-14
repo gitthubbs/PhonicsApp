@@ -195,10 +195,13 @@ onMounted(() => {
 .practice-page {
   padding: 20px;
   background: #E5FFE5FF;
+  box-sizing: border-box;
   min-height: calc(100vh - 82px);
   text-align: center;
   position: relative;
   max-width: 600px;
+  width: 100%;
+  align-items: center;
   margin: 0 auto;
 }
 
@@ -308,9 +311,9 @@ onMounted(() => {
   transform: translateX(-10px);
 }
 
-@media (min-width: 601px) {
+@media (min-width: 531px) {
   .next-btn {
-    right: calc(50% - 311px);
+    right: calc(50% - 275px);
   }
 }
 

@@ -208,16 +208,6 @@ export const phonicsWords = {
         { text: 'we' },
         { text: 'water' },
     ],
-    'tʃ': [
-        { text: 'chair' },
-        { text: 'watch' },
-        { text: 'chicken' },
-    ],
-    'dʒ': [
-        { text: 'juice' },
-        { text: 'jump' },
-        { text: 'bridge' },
-    ],
 };
 
 export const phonicsSymbols = Object.keys(phonicsWords);
